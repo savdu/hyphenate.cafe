@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>-hyphenate</title>
+    <style>
+        body { font-family: 'Monaco', monospace; font-size: small; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        pre { line-height: 1.4; text-align: left; }
+        details { text-align: left; margin: 2px 0; }
+        summary { cursor: pointer; list-style: none; }
+        summary::-webkit-details-marker { display: none; }
+        details[open] summary { margin-bottom: 4px; }
+        summary::after { content: ' ▶'; }
+        details[open] summary::after { content: ' ▼'; }
+        .section-content { padding-left: 1em; }
+    </style>
+</head>
+<body>
+    <pre id="scene"></pre>
+
+    <script>
+        const scenes = [`
+        *  .  *  .  *  .  *  .  ✿  .  *  .  *
+      .     -  h  y  p  h  e  n  a  t  e      .
+        *  .  ✿  .  *  .  *  .  *  .  *  .  *
+
+      /\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\
+
+        .---------.    .---------.    .------.
+       |  (✿◠‿◠)   |  |( •◡•) ≧◡≦ |  |  ◕_◕   |
+       |    \\|/    |  |  |\\ . /|  |  |  ~~~   |
+       |   [___]   |  |  [=] [=]  |  | [___]  |
+       |    | |    |  |   |   |   |  |  | |   |
+       \`-----------'  \`-----------'  \`--------'
+                                        ⊹
+         (._.)     ᕙ(\`▽´)ᕗ   (º﹃º)     (ˊᵕˋ)⊹
+          /|\\        (  )      /|\\        / \\
+    |==+===+=+=+==+=+==+=+=+=+==+=+=+==+=+=+==+==|
+    | --- ---- --- ---- --- ---- --- ---- --- ---|
+    |_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|
+    ||||||||||||||||||||||||||||||||||||||||||||||
+      ✿     ✿ ♥       ✿  ✿ ✿    ♥   ✿ ✿    ✿ ✿ ✿
+`, `
+        .  *  .  *  .  *  .  ✿  .  *  .  *  .
+      *     -  h  y  p  h  e  n  a  t  e      *
+        *  *  .  ✿  .  *  .  *  .  *  .  *  .
+
+      /\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\
+
+        .---------.    .---------.    .------.
+       |  (◠‿◠✿)   |  | ≧◡≦ (•◡• )|  |  ◕_◕   |
+       |    \\|/    |  |  |\\ . /|  |  |  (c)   |
+       |   [___]   |  |  [=] [=]  |  | [___]  |
+       |    | |    |  |   |   |   |  |  | |   |
+       \`-----------'  \`-----------'  \`--------'
+                                              ⊹
+        \\(^-^)     ᕙ(\`ᵕ´)ᕗ   (º﹃º)    ⊹(ˊᵕˋ)
+           |\\        (  )      /|\\        / \\
+    |==+===+=+=+==+=+==+=+=+=+==+=+=+==+=+=+==+==|
+    | --- ---- --- ---- --- ---- --- ---- --- ---|
+    |_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|
+    ||||||||||||||||||||||||||||||||||||||||||||||
+     ✿     ✿ ♥       ✿  ✿ ✿    ♥   ✿ ✿    ✿ ✿ ✿
+`];
+
+        const pre = document.getElementById('scene');
+        let current = 0;
+        pre.textContent = scenes[0];
+
+        setInterval(() => {
+            current = 1 - current;
+            pre.textContent = scenes[current];
+        }, 1000);
+    </script>
+
+    <p>✿ hyphenate ✿<br><i>come as you are</i></p>
+
+    <div>
+        <details>
+            <summary>cafe</summary>
+            <div class="section-content">
+                coffee<br>
+                tea
+            </div>
+        </details>
+        <details>
+            <summary>flower shop</summary>
+            <div class="section-content">
+                seasonal bouquets
+            </div>
+        </details>
+        <details>
+            <summary>wine bar</summary>
+            <div class="section-content">
+                whatever we're liking at the moment
+            </div>
+        </details>
+        <details>
+            <summary>lounge</summary>
+            <div class="section-content">
+                and zone out, no judgement<br>
+                little tings
+            </div>
+        </details>
+        <details>
+            <summary>event space</summary>
+            <div class="section-content">
+                soup night<br>
+                singles night<br>
+            </div>
+        </details>
+        <details>
+            <summary>fitness studio</summary>
+            <div class="section-content">
+                loud hiit <br>
+                silent yoga
+            </div>
+        </details>
+        <details>
+            <summary>anything & everything you want it to be</summary>
+            <div class="section-content">
+                contact us
+            </div>
+        </details>
+    </div>
+
+</body>
+</html>
