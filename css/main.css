@@ -1,0 +1,116 @@
+/* Atom One Light palette */
+:root {
+    --color-blue:   #4078f2;
+    --color-red:    #e45649;
+    --color-green:  #50a14f;
+    --color-purple: #a626a4;
+    --color-orange: #c18401;
+    --color-cyan:   #0997b3;
+    --color-fg:     #383a42;
+    --color-bg:     #fafafa;
+}
+
+body {
+    /* font-family: 'Noto Sans Mono', 'Monaco', monospace; */
+    font-family: 'Monaco', monospace;
+    font-size: small;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+pre {
+    line-height: 1.4;
+    text-align: left;
+}
+
+details {
+    text-align: left;
+    margin: 2px 0;
+}
+
+summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+summary::-webkit-details-marker {
+    display: none;
+}
+
+details[open] summary {
+    margin-bottom: 4px;
+}
+
+summary::after {
+    content: ' ▶';
+}
+
+details[open] summary::after {
+    content: ' ▼';
+}
+
+.section-content {
+    padding-left: 1em;
+}
+
+/* --- figures --- */
+
+.figure {
+    cursor: pointer;
+    color: var(--color-blue);
+}
+
+
+/* --- stage: fixed-height anchor so the menu never moves --- */
+
+body {
+    background: var(--color-bg);
+}
+
+#stage {
+    position: relative;
+}
+
+/* --- story view --- */
+
+#story {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
+    background: var(--color-bg);
+    text-align: left;
+}
+
+#story-art {
+    margin-bottom: 0.5em;
+}
+
+#story-text {
+    white-space: pre-wrap;
+    margin: 0 0 1em 0;
+}
+
+.story-nav {
+    display: flex;
+    gap: 1em;
+    justify-content: center;
+    margin-bottom: 1.5em;
+}
+
+.story-nav button {
+    font-family: 'Noto Sans Mono', 'Monaco', monospace;
+    font-size: small;
+    cursor: pointer;
+    background: none;
+    border: 1px solid currentColor;
+    padding: 2px 8px;
+}
+
+.story-nav button:disabled {
+    opacity: 0.3;
+    cursor: default;
+}

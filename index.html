@@ -4,77 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>-hyphenate</title>
-    <style>
-        body { font-family: 'Monaco', monospace; font-size: small; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        pre { line-height: 1.4; text-align: left; }
-        details { text-align: left; margin: 2px 0; }
-        summary { cursor: pointer; list-style: none; }
-        summary::-webkit-details-marker { display: none; }
-        details[open] summary { margin-bottom: 4px; }
-        summary::after { content: ' ▶'; }
-        details[open] summary::after { content: ' ▼'; }
-        .section-content { padding-left: 1em; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wdth,wght@62.5..100,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css" />
 </head>
 <body>
-    <pre id="scene"></pre>
+    <!-- stage: scene and story share this space so the menu never moves -->
+    <div id="stage">
+        <pre id="scene"></pre>
 
-    <script>
-        const scenes = [`
-        *  .  *  .  *  .  *  .  ✿  .  *  .  *
-      .     -  h  y  p  h  e  n  a  t  e      .
-        *  .  ✿  .  *  .  *  .  *  .  *  .  *
+        <!-- story view overlays the scene when active -->
+        <div id="story" hidden>
+        <pre id="story-art"></pre>
+        <p id="story-text"></p>
+        <nav class="story-nav">
+            <button id="story-back">← back</button>
+            <button id="story-return">↩ return to cafe</button>
+            <button id="story-next">next →</button>
+        </nav>
+        </div>
+    </div><!-- /#stage -->
 
-      /\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\
-
-        .---------.    .---------.    .------.
-       |  (✿◠‿◠)   |  |( •◡•) ≧◡≦ |  |  ◕_◕   |
-       |    \\|/    |  |  |\\ . /|  |  |  ~~~   |
-       |   [___]   |  |  [=] [=]  |  | [___]  |
-       |    | |    |  |   |   |   |  |  | |   |
-       \`-----------'  \`-----------'  \`--------'
-                                        ⊹
-         (._.)     ᕙ(\`▽´)ᕗ   (º﹃º)     (ˊᵕˋ)⊹
-          /|\\        (  )      /|\\        / \\
-    |==+===+=+=+==+=+==+=+=+=+==+=+=+==+=+=+==+==|
-    | --- ---- --- ---- --- ---- --- ---- --- ---|
-    |_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|
-    ||||||||||||||||||||||||||||||||||||||||||||||
-      ✿     ✿ ♥       ✿  ✿ ✿    ♥   ✿ ✿    ✿ ✿ ✿
-`, `
-        .  *  .  *  .  *  .  ✿  .  *  .  *  .
-      *     -  h  y  p  h  e  n  a  t  e      *
-        *  *  .  ✿  .  *  .  *  .  *  .  *  .
-
-      /\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\
-
-        .---------.    .---------.    .------.
-       |  (◠‿◠✿)   |  | ≧◡≦ (•◡• )|  |  ◕_◕   |
-       |    \\|/    |  |  |\\ . /|  |  |  (c)   |
-       |   [___]   |  |  [=] [=]  |  | [___]  |
-       |    | |    |  |   |   |   |  |  | |   |
-       \`-----------'  \`-----------'  \`--------'
-                                              ⊹
-        \\(^-^)     ᕙ(\`ᵕ´)ᕗ   (º﹃º)    ⊹(ˊᵕˋ)
-           |\\        (  )      /|\\        / \\
-    |==+===+=+=+==+=+==+=+=+=+==+=+=+==+=+=+==+==|
-    | --- ---- --- ---- --- ---- --- ---- --- ---|
-    |_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|_|_|_|__|
-    ||||||||||||||||||||||||||||||||||||||||||||||
-     ✿     ✿ ♥       ✿  ✿ ✿    ♥   ✿ ✿    ✿ ✿ ✿
-`];
-
-        const pre = document.getElementById('scene');
-        let current = 0;
-        pre.textContent = scenes[0];
-
-        setInterval(() => {
-            current = 1 - current;
-            pre.textContent = scenes[current];
-        }, 1000);
-    </script>
-
-    <p>✿ hyphenate ✿<br><i>come as you are</i></p>
+    <p>✿ -hyphenate ✿<br><i>come as you are</i></p>
 
     <div>
         <details>
@@ -125,5 +77,6 @@
         </details>
     </div>
 
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
