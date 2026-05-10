@@ -11,8 +11,8 @@
 }
 
 body {
-    /* font-family: 'Noto Sans Mono', 'Monaco', monospace; */
-    font-family: 'Monaco', monospace;
+    /* font-family: 'Noto Sans Mono', 'Menlo', monospace; */
+    font-family: 'Menlo', monospace;
     font-size: small;
     display: flex;
     flex-direction: column;
@@ -102,7 +102,7 @@ body {
 }
 
 .story-nav button {
-    font-family: 'Noto Sans Mono', 'Monaco', monospace;
+    font-family: 'Noto Sans Mono', 'Menlo', monospace;
     font-size: small;
     cursor: pointer;
     background: none;
