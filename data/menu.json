@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "updated": null,
+  "note": "Starting point — edit this on the Menu tab of admin.html, not by hand.",
+  "sections": [
+    {
+      "id": "coffee",
+      "name": "coffee",
+      "items": [
+        {
+          "id": "i-cortado",
+          "name": "oat cortado",
+          "price": 500,
+          "ingredients": "double espresso, steamed oat milk",
+          "note": "the house pour",
+          "tags": ["vegan"],
+          "soldOut": false,
+          "mods": [
+            { "id": "m-shot", "name": "extra shot", "price": 100 },
+            { "id": "m-decaf", "name": "decaf", "price": 0 }
+          ]
+        },
+        {
+          "id": "i-latte",
+          "name": "honey lavender latte",
+          "price": 650,
+          "ingredients": "espresso, whole milk, honey lavender syrup",
+          "note": "sweet, floral, our most-ordered",
+          "tags": ["dairy"],
+          "soldOut": false,
+          "mods": [
+            { "id": "m-oat", "name": "oat milk", "price": 50 },
+            { "id": "m-shot", "name": "extra shot", "price": 100 },
+            { "id": "m-iced", "name": "iced", "price": 0 }
+          ]
+        },
+        {
+          "id": "i-drip",
+          "name": "drip coffee",
+          "price": 300,
+          "ingredients": "rotating single origin",
+          "note": "ask what's on today",
+          "tags": ["vegan"],
+          "soldOut": false,
+          "mods": [{ "id": "m-milk", "name": "splash of milk", "price": 0 }]
+        }
+      ]
+    },
+    {
+      "id": "tea",
+      "name": "tea",
+      "items": [
+        {
+          "id": "i-matcha",
+          "name": "ceremonial matcha",
+          "price": 600,
+          "ingredients": "uji matcha, milk of choice",
+          "note": "whisked to order",
+          "tags": ["vegan-option"],
+          "soldOut": false,
+          "mods": [
+            { "id": "m-oat", "name": "oat milk", "price": 50 },
+            { "id": "m-iced", "name": "iced", "price": 0 }
+          ]
+        },
+        {
+          "id": "i-genmaicha",
+          "name": "genmaicha",
+          "price": 400,
+          "ingredients": "green tea, toasted rice",
+          "note": "nutty and low caffeine",
+          "tags": ["vegan", "low-caffeine"],
+          "soldOut": false,
+          "mods": []
+        }
+      ]
+    },
+    {
+      "id": "food",
+      "name": "food",
+      "items": [
+        {
+          "id": "i-focaccia",
+          "name": "rosemary focaccia",
+          "price": 400,
+          "ingredients": "focaccia, olive oil, rosemary, flaky salt",
+          "note": "baked this morning",
+          "tags": ["vegan", "gluten"],
+          "soldOut": false,
+          "mods": [{ "id": "m-butter", "name": "cultured butter", "price": 100 }]
+        },
+        {
+          "id": "i-cookie",
+          "name": "brown butter cookie",
+          "price": 350,
+          "ingredients": "brown butter, dark chocolate, sea salt",
+          "note": "",
+          "tags": ["dairy", "gluten"],
+          "soldOut": false,
+          "mods": []
+        }
+      ]
+    },
+    {
+      "id": "wine",
+      "name": "wine",
+      "items": [
+        {
+          "id": "i-pet-nat",
+          "name": "pet-nat, glass",
+          "price": 1200,
+          "ingredients": "whatever we're liking at the moment",
+          "note": "ask us what's open",
+          "tags": ["21+"],
+          "soldOut": false,
+          "mods": []
+        },
+        {
+          "id": "i-orange",
+          "name": "skin contact, glass",
+          "price": 1300,
+          "ingredients": "rotating bottle",
+          "note": "",
+          "tags": ["21+"],
+          "soldOut": false,
+          "mods": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>-hyphenate · admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="stylesheet" href="css/popup.css" />
+</head>
+<body>
+    <div class="wrap wrap-wide">
+        <header class="masthead no-print">
+            <div class="mark">✿ -hyphenate ✿</div>
+            <div class="tag">admin</div>
+        </header>
+
+        <div id="admin-gate" class="center stack" style="max-width:18em;margin:3em auto">
+            <p>this page runs the register</p>
+            <form id="admin-gate-form" class="stack">
+                <input id="admin-passcode" type="password" inputmode="text" placeholder="passcode" autocomplete="off" />
+                <button class="primary" type="submit" style="width:100%">unlock</button>
+            </form>
+            <p id="admin-gate-error" class="small" style="color:var(--color-red)"></p>
+        </div>
+
+        <div id="admin-app" hidden>
+            <div id="status-strip" class="status-strip no-print"></div>
+            <div id="admin-tabs" class="no-print"></div>
+            <div id="admin-panels"></div>
+        </div>
+    </div>
+
+    <script type="module" src="js/popup/admin.js"></script>
+</body>
+</html>
