@@ -24,12 +24,12 @@ function draw(root) {
   const live = orders.filter(o => o.status !== 'void');
   const revenue = live.reduce((s, o) => s + orderTotal(o), 0);
   const tips = live.reduce((s, o) => s + (o.tip || 0), 0);
-  const unpaid = live.filter(o => !o.payment.paid && o.payment.method !== 'comp');
-  const byMethod = new Map();
-  for (const o of live) {
-    if (!o.payment.paid) continue;
-    byMethod.set(o.payment.method, (byMethod.get(o.payment.method) || 0) + orderTotal(o));
-  }
+  // const unpaid = live.filter(o => !o.payment.paid && o.payment.method !== 'comp');
+  // const byMethod = new Map();
+  // for (const o of live) {
+  //   if (!o.payment.paid) continue;
+  //   byMethod.set(o.payment.method, (byMethod.get(o.payment.method) || 0) + orderTotal(o));
+  // }
 
   const itemCounts = computeItemCounts();
 
@@ -38,20 +38,20 @@ function draw(root) {
       h('div.row-between', {},
         h('span', {}, 'orders'), h('span', {}, String(live.length))),
       h('div.row-between', {},
-        h('span', {}, 'gross (incl. tips)'), h('strong', {}, fmt(revenue))),
-      h('div.row-between', {},
-        h('span.muted', {}, 'of which tips'), h('span', {}, fmt(tips))),
-      unpaid.length ? h('div.row-between', { style: 'color:var(--color-red)' },
-        h('span', {}, 'still unpaid'), h('span', {}, `${unpaid.length} · ${fmt(unpaid.reduce((s, o) => s + orderTotal(o), 0))}`)) : null
+        h('span', {}, 'gross'), h('strong', {}, fmt(revenue))),
+      // h('div.row-between', {},
+      //   h('span.muted', {}, 'of which tips'), h('span', {}, fmt(tips)))
+      // unpaid.length ? h('div.row-between', { style: 'color:var(--color-red)' },
+      //   h('span', {}, 'still unpaid'), h('span', {}, `${unpaid.length} · ${fmt(unpaid.reduce((s, o) => s + orderTotal(o), 0))}`)) : null
     ),
-    h('hr'),
-    h('h3', { style: 'margin-bottom:.5em' }, 'collected by method'),
-    byMethod.size
-      ? h('table.report', {},
-          [...byMethod.entries()].map(([m, cents]) => h('tr', {},
-            h('td', {}, m), h('td.n', {}, fmt(cents))))
-        )
-      : h('p.muted.small', {}, 'nothing collected yet'),
+    // h('hr'),
+    // h('h3', { style: 'margin-bottom:.5em' }, 'collected by method'),
+    // byMethod.size
+    //   ? h('table.report', {},
+    //       [...byMethod.entries()].map(([m, cents]) => h('tr', {},
+    //         h('td', {}, m), h('td.n', {}, fmt(cents))))
+    //     )
+    //   : h('p.muted.small', {}, 'nothing collected yet'),
     h('hr'),
     h('h3', { style: 'margin-bottom:.5em' }, 'items sold'),
     itemCounts.length
@@ -61,9 +61,9 @@ function draw(root) {
             h('td', {}, name), h('td.n', {}, String(c.qty)), h('td.n', {}, fmt(c.revenue))))
         )
       : h('p.muted.small', {}, 'no sales yet'),
-    h('div.row.no-print', { style: 'margin-top:1em' },
-      h('button', { onclick: () => window.print() }, 'print report')
-    )
+    // h('div.row.no-print', { style: 'margin-top:1em' },
+    //   h('button', { onclick: () => window.print() }, 'print report')
+    // )
   );
 }
 

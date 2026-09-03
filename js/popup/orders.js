@@ -1,15 +1,17 @@
 import { store } from './store.js';
-import { config } from './config.js';
+// import { config } from './config.js';
 import { fmt, orderTotal } from './money.js';
 import { h, render, timeOf, minutesSince, modal } from './dom.js';
-import { venmoNote } from './venmo.js';
+// import { venmoNote } from './venmo.js';
 
 /* -------------------------------------------------------------------------
    Order tracker.
 
-   Fulfilment status (queued → ready → done) is deliberately separate from
-   payment status. They come apart constantly in real service: friends who say
-   "I'll venmo you later", drinks that are ready before the phone comes out.
+   Payment confirmation (unpaid/collect/method) is commented out below, not
+   deleted — this build assumes everyone here is a friend and money shows up
+   without the app tracking it. To bring collection tracking back: restore
+   the two imports above, the collect() function, its "collect" button in
+   ticketNode's actions, and the paid/unpaid line + unpaid summary in draw().
    ------------------------------------------------------------------------- */
 
 const STALE_MINUTES = 10;
@@ -25,23 +27,23 @@ async function patch(order, changes) {
   await store.putOrder({ ...order, ...changes });
 }
 
-async function collect(order) {
-  const due = orderTotal(order);
-
-  const paid = await modal(done => h('div.center.stack', {},
-    h('div.muted.small', {}, `order #${order.number}${order.name ? ` · ${order.name}` : ''}`),
-    h('div.amount-due', {}, fmt(due)),
-    h('p.small.muted', {}, `have them scan the venmo QR at the register (@${config.venmoUsername}) — note: “${venmoNote(order)}”`),
-    h('div.row', { style: 'justify-content:center;margin-top:.5em' },
-      h('button', { onclick: () => done(null) }, 'close'),
-      h('button.primary', { onclick: () => done(true) }, 'mark paid ✓')
-    )
-  ));
-
-  if (paid) {
-    await patch(order, { payment: { ...order.payment, paid: true, paidAt: Date.now() } });
-  }
-}
+// async function collect(order) {
+//   const due = orderTotal(order);
+//
+//   const paid = await modal(done => h('div.center.stack', {},
+//     h('div.muted.small', {}, `order #${order.number}${order.name ? ` · ${order.name}` : ''}`),
+//     h('div.amount-due', {}, fmt(due)),
+//     h('p.small.muted', {}, `have them scan the venmo QR at the register (@${config.venmoUsername}) — note: “${venmoNote(order)}”`),
+//     h('div.row', { style: 'justify-content:center;margin-top:.5em' },
+//       h('button', { onclick: () => done(null) }, 'close'),
+//       h('button.primary', { onclick: () => done(true) }, 'mark paid ✓')
+//     )
+//   ));
+//
+//   if (paid) {
+//     await patch(order, { payment: { ...order.payment, paid: true, paidAt: Date.now() } });
+//   }
+// }
 
 function ticketNode(order) {
   const mins = minutesSince(order.createdAt);
@@ -64,9 +66,9 @@ function ticketNode(order) {
     actions.push(h('button.ghost.tiny', { onclick: () => patch(order, { status: 'ready' }) }, '↩ reopen'));
   }
 
-  if (!order.payment.paid) {
-    actions.push(h('button', { onclick: () => collect(order) }, 'collect'));
-  }
+  // if (!order.payment.paid) {
+  //   actions.push(h('button', { onclick: () => collect(order) }, 'collect'));
+  // }
 
   return h('div.ticket', { 'data-status': order.status },
     h('div.row-between', {},
@@ -82,9 +84,10 @@ function ticketNode(order) {
     h('ul', {}, items),
     h('div.row-between', {},
       h('span.small', {},
-        h('span', { class: order.payment.paid ? 'paid' : 'unpaid' },
-          order.payment.paid ? `paid · ${order.payment.method}` : `UNPAID · ${order.payment.method}`),
-        ' · ', fmt(due)
+        // h('span', { class: order.payment.paid ? 'paid' : 'unpaid' },
+        //   order.payment.paid ? `paid · ${order.payment.method}` : `UNPAID · ${order.payment.method}`),
+        // ' · ',
+        fmt(due)
       ),
       h('button.ghost.tiny.danger', {
         onclick: async () => {
@@ -110,14 +113,14 @@ function draw() {
   const queued = orders.filter(o => o.status === 'queued').sort(byOldest);
   const ready = orders.filter(o => o.status === 'ready').sort(byOldest);
   const done = orders.filter(o => o.status === 'done').sort(byNewest);
-  const unpaid = orders.filter(o => !o.payment.paid && o.payment.method !== 'comp');
+  // const unpaid = orders.filter(o => !o.payment.paid && o.payment.method !== 'comp');
 
   render(els.summary,
     h('div.row-between.small', {},
-      h('span.muted', {}, `${orders.length} orders today`),
-      unpaid.length
-        ? h('span', { style: 'color:var(--color-red)' }, `${unpaid.length} unpaid · ${fmt(unpaid.reduce((s, o) => s + orderTotal(o), 0))}`)
-        : h('span', { style: 'color:var(--color-green)' }, 'all settled')
+      h('span.muted', {}, `${orders.length} orders today`)
+      // unpaid.length
+      //   ? h('span', { style: 'color:var(--color-red)' }, `${unpaid.length} unpaid · ${fmt(unpaid.reduce((s, o) => s + orderTotal(o), 0))}`)
+      //   : h('span', { style: 'color:var(--color-green)' }, 'all settled')
     )
   );
 

@@ -36,7 +36,7 @@ async function editItem(section, item) {
   const isNew = !item;
   const draft = item
     ? JSON.parse(JSON.stringify(item))
-    : { id: uid('i'), name: '', price: 0, ingredients: '', note: '', tags: [], soldOut: false, mods: [] };
+    : { id: uid('i'), name: '', price: 0, ingredients: '', note: '', tags: [], soldOut: false, morning: false, evening: false, mods: [] };
 
   const result = await modal(done => {
     const nameInput = h('input', { type: 'text', value: draft.name, placeholder: 'oat cortado' });
@@ -45,6 +45,8 @@ async function editItem(section, item) {
     const noteInput = h('input', { type: 'text', value: draft.note, placeholder: 'optional flavor note' });
     const tagsInput = h('input', { type: 'text', value: (draft.tags || []).join(', '), placeholder: 'vegan, gluten' });
     const soldOutBox = h('input', { type: 'checkbox', checked: !!draft.soldOut });
+    const morningBox = h('input', { type: 'checkbox', checked: !!draft.morning });
+    const eveningBox = h('input', { type: 'checkbox', checked: !!draft.evening });
 
     let mods = draft.mods ? draft.mods.map(m => ({ ...m })) : [];
     const modsList = h('div.stack');
@@ -74,7 +76,12 @@ async function editItem(section, item) {
       h('label.field', {}, h('span', {}, 'ingredients'), ingInput),
       h('label.field', {}, h('span', {}, 'note'), noteInput),
       h('label.field', {}, h('span', {}, 'tags (comma separated)'), tagsInput),
-      h('label.mod-toggle', {}, soldOutBox, '86 — sold out today'),
+      h('label.mod-toggle', {}, soldOutBox, 'sold out'),
+      h('div', {}, h('span.muted.small', {}, 'when is this served? (leave both off for all day)')),
+      h('div', {},
+        h('label.mod-toggle', {}, morningBox, 'morning (10am–2pm)'),
+        h('label.mod-toggle', {}, eveningBox, 'evening (5–10pm)')
+      ),
       h('div', {}, h('span.muted.small', {}, 'add-ons'), modsList),
       h('div.row-between', { style: 'margin-top:.5em' },
         isNew ? h('span') : h('button.danger', { onclick: () => done({ deleted: true }) }, 'delete item'),
@@ -90,6 +97,8 @@ async function editItem(section, item) {
                 note: noteInput.value.trim(),
                 tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
                 soldOut: soldOutBox.checked,
+                morning: morningBox.checked,
+                evening: eveningBox.checked,
                 mods: mods.filter(m => m.name.trim()).map(m => ({ ...m, name: m.name.trim() }))
               }
             })
@@ -160,14 +169,22 @@ async function move(list, item, dir) {
 
 /* --- rendering --------------------------------------------------------------- */
 
+const daypartLabel = item => {
+  if (item.morning && item.evening) return 'morning, evening';
+  if (item.morning) return 'morning';
+  if (item.evening) return 'evening';
+  return 'all day';
+};
+
 function itemRow(section, item) {
   return h('div.row-between', { style: 'padding:.35em 0;border-top:1px dotted var(--color-rule)' },
     h('span.grow', { style: item.soldOut ? 'opacity:.5;text-decoration:line-through' : '' },
-      `${item.name} — ${fmt(item.price)}`),
+      `${item.name} — ${fmt(item.price)} `,
+      h('span.muted.small', {}, `(${daypartLabel(item)})`)),
     h('div.row', {},
       h('button.ghost.tiny', { onclick: () => move(section.items, item, -1) }, '↑'),
       h('button.ghost.tiny', { onclick: () => move(section.items, item, 1) }, '↓'),
-      h('button.tiny', { onclick: () => toggleSoldOut(item) }, item.soldOut ? 'un-86' : '86'),
+      h('button.tiny', { onclick: () => toggleSoldOut(item) }, item.soldOut ? 'available' : 'sold out!'),
       h('button.tiny', { onclick: () => editItem(section, item) }, 'edit')
     )
   );
@@ -181,7 +198,7 @@ function sectionBlock(section) {
         h('button.ghost.tiny', { onclick: () => move(menu.sections, section, -1) }, '↑'),
         h('button.ghost.tiny', { onclick: () => move(menu.sections, section, 1) }, '↓'),
         h('button.ghost.tiny', { onclick: () => renameSection(section) }, 'rename'),
-        h('button.ghost.tiny.danger', { onclick: () => deleteSection(section) }, 'delete')
+        h('button.ghost.tiny.danger', { onclick: () => deleteSection(section) }, 'delete!')
       )
     ),
     section.items.map(item => itemRow(section, item)),
@@ -236,18 +253,18 @@ export function mountMenuEditor(root) {
 
   render(root,
     h('div.row-between', {},
-      h('p.small.muted', {}, 'changes save automatically and reach the public menu ',
+      h('p.small.muted', {}, 'changes save automatically and sync live ',
         h('span', { id: 'sync-scope' }, '')),
       els.saveHint
     ),
     els.sections,
-    h('hr'),
-    h('div.row', {},
-      h('button', { onclick: exportJson }, 'export menu.json'),
-      h('button', { onclick: () => fileInput.click() }, 'import menu.json'),
-      fileInput
-    ),
-    h('p.small.muted', {}, 'export gives you a file you can commit to data/menu.json as the new baseline, or hand to another device running local-only mode.')
+    // h('hr'),
+    // h('div.row', {},
+    //   h('button', { onclick: exportJson }, 'export menu.json'),
+    //   h('button', { onclick: () => fileInput.click() }, 'import menu.json'),
+    //   fileInput
+    // ),
+    // h('p.small.muted', {}, 'export gives you a file you can commit to data/menu.json as the new baseline, or hand to another device running local-only mode.')
   );
 
   store.onMenu(m => {

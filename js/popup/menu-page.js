@@ -10,7 +10,9 @@ const stamp = document.getElementById('menu-stamp');
 
 function itemNode(item) {
   const tags = (item.tags || []).map(t => h('span.badge', {}, t));
-  if (item.soldOut) tags.unshift(h('span.badge.eightysix', {}, '86'));
+  if (item.morning) tags.unshift(h('span.badge', {}, 'morning'));
+  if (item.evening) tags.unshift(h('span.badge', {}, 'evening'));
+  if (item.soldOut) tags.unshift(h('span.badge.eightysix', {}, 'sold out'));
 
   return h('div.menu-item', { class: item.soldOut ? 'sold-out' : '' },
     h('div.line', {},
@@ -25,7 +27,7 @@ function itemNode(item) {
 }
 
 function sectionNode(section) {
-  const items = (section.items || []).filter(i => !i.hidden);
+  const items = section.items || [];
   if (!items.length) return null;
   return h('section.menu-section', {},
     h('h2', {}, section.name),

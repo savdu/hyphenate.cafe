@@ -1,16 +1,16 @@
 import { store } from './store.js';
-import { config } from './config.js';
+// import { config } from './config.js';
 import { fmt, lineTotal, orderSubtotal, orderTotal } from './money.js';
 import { h, render, modal } from './dom.js';
-import { venmoNote } from './venmo.js';
+// import { venmoNote } from './venmo.js';
 
 /* -------------------------------------------------------------------------
-   POS. Tap items, adjust, take payment, drop the ticket into the queue.
+   POS. Tap items, adjust, then confirm to drop the ticket into the queue.
 
-   Payment itself happens against a static Venmo QR code printed and posted
-   at the register (see POPUP.md) — this screen's job is just to show the
-   exact amount due and a note the customer can add to their payment, so it
-   shows up findable in your Venmo activity.
+   This build assumes everyone here is a friend and money shows up without
+   the app tracking or prompting for it — the Venmo reminder text is
+   commented out below, not deleted. To bring it back: restore the two
+   imports above and the reminder line in the confirm modal.
    ------------------------------------------------------------------------- */
 
 let menu = { sections: [] };
@@ -52,7 +52,7 @@ async function openItemModal(item, line = null) {
 
   const result = await modal(done => {
     const noteInput = h('input', {
-      type: 'text', value: line?.note || '', placeholder: 'no ice, extra hot, to-go…'
+      type: 'text', value: line?.note || '', placeholder: 'no ice…'
     });
 
     const modToggles = (item.mods || []).map(m => {
@@ -71,7 +71,7 @@ async function openItemModal(item, line = null) {
         h('span.muted', {}, fmt(item.price))
       ),
       modToggles.length ? h('div', {}, modToggles) : h('div.muted.small', {}, 'no preset options'),
-      h('label.field', {}, h('span', {}, 'note to the bar'), noteInput),
+      h('label.field', {}, h('span', {}, 'note'), noteInput),
       h('div.row', { style: 'justify-content:flex-end;margin-top:.5em' },
         h('button', { onclick: () => done(null) }, 'cancel'),
         h('button.primary', {
@@ -116,69 +116,40 @@ async function checkout() {
     discount: cart.discount,
     tip: 0,
     status: 'queued',
+    /* Only Venmo, no tip — this is a home cafe, not a full POS. Payment is
+       marked separately, from the "collect" button on the orders tab, once
+       it actually lands. Tip presets and other payment methods (cash, comp)
+       are hidden, not deleted — see the commented block below to bring them
+       back if that ever changes. */
     payment: { method: 'venmo', paid: false, paidAt: null }
   };
 
-  const settled = await modal(done => {
-    const box = h('div.stack');
+  const confirmed = await modal(done => {
+    const due = subtotal();
+    // const note = venmoNote(order);
 
-    const draw = () => {
-      const due = Math.max(0, subtotal() - order.discount + order.tip);
-      const isComp = order.payment.method === 'comp';
-      const note = venmoNote(order);
+    return h('div.stack', {},
+      h('div.center.stack', {},
+        h('div.muted.small', {}, `order #${order.number}${order.name ? ` · ${order.name}` : ''}`),
+        h('div.amount-due', {}, fmt(due))
+      ),
+      // h('p.small.muted', {}, `have them scan the venmo QR at the register (@${config.venmoUsername}) — note: “${note}”`),
+      h('hr'),
+      h('div.row', { style: 'justify-content:space-between;margin-top:.5em' },
+        h('button', { onclick: () => done(false) }, 'back'),
+        h('button.primary', { onclick: () => done(true) }, 'confirm')
+      )
 
-      const tipButtons = isComp ? [] : (config.tipPresets || []).map(pct => {
-        const cents = Math.round(subtotal() * pct / 100);
-        return h('button', {
-          class: order.tip === cents ? 'primary' : '',
-          onclick: () => { order.tip = cents; draw(); }
-        }, pct === 0 ? 'no tip' : `${pct}%`);
-      });
-
-      render(box,
-        h('div.center.stack', {},
-          h('div.muted.small', {}, `order #${order.number}${order.name ? ` · ${order.name}` : ''}`),
-          h('div.amount-due', {}, fmt(due)),
-          tipButtons.length ? h('div.row.center', { style: 'justify-content:center;flex-wrap:wrap' }, tipButtons) : null
-        ),
-        isComp
-          ? h('p.small.muted', {}, 'on the house — nothing to collect')
-          : h('p.small.muted', {}, `have them scan the venmo QR at the register (@${config.venmoUsername}) — note: “${note}”`),
-        h('hr'),
-        h('div.row', { style: 'flex-wrap:wrap;justify-content:center' },
-          ['venmo', 'cash', 'comp', 'other'].map(m =>
-            h('button', {
-              class: order.payment.method === m ? 'primary' : '',
-              onclick: () => {
-                order.payment.method = m;
-                if (m === 'comp') { order.discount = subtotal(); order.tip = 0; }
-                else if (order.discount === subtotal()) { order.discount = 0; }
-                draw();
-              }
-            }, m))
-        ),
-        h('div.row', { style: 'justify-content:space-between;margin-top:.5em' },
-          h('button', { onclick: () => done(null) }, 'back'),
-          h('div.row', {},
-            isComp ? null : h('button', { onclick: () => done({ paid: false }) }, 'queue, pay later'),
-            h('button.primary', { onclick: () => done({ paid: true }) }, isComp ? 'send to kitchen' : 'paid ✓')
-          )
-        )
-      );
-    };
-
-    draw();
-    return box;
+      /* ---------------------------------------------------------------
+         Tip + payment-method picker (venmo / cash / comp / other) —
+         hidden for now, this is a home cafe and everything's Venmo.
+         To bring back: restore the tip buttons + method buttons here,
+         and drive `order.tip` / `order.payment.method` from them again.
+         --------------------------------------------------------------- */
+    );
   });
 
-  if (!settled) return;
-
-  order.payment.paid = settled.paid;
-  order.payment.paidAt = settled.paid ? Date.now() : null;
-  if (order.payment.method === 'comp') {
-    order.discount = subtotal();
-    order.tip = 0;
-  }
+  if (!confirmed) return;
 
   await store.putOrder(order);
   cart = newCart();
@@ -190,7 +161,7 @@ async function checkout() {
 
 function drawGrid() {
   const sections = (menu.sections || []).map(section => {
-    const items = (section.items || []).filter(i => !i.hidden);
+    const items = section.items || [];
     if (!items.length) return null;
     return h('div', {},
       h('h3.muted', { style: 'margin:.75em 0 .35em' }, section.name),
@@ -247,7 +218,7 @@ function drawCart() {
   );
 
   els.charge.disabled = !lines.length;
-  els.charge.textContent = lines.length ? `charge ${fmt(due)}` : 'charge';
+  els.charge.textContent = lines.length ? `confirm ${fmt(due)}` : 'confirm';
   els.clear.disabled = !lines.length && !cart.name;
 }
 
@@ -278,7 +249,7 @@ export function mountPos(root) {
   });
   els.grid = h('div');
   els.cart = h('div');
-  els.charge = h('button.primary', { disabled: true, onclick: checkout }, 'charge');
+  els.charge = h('button.primary', { disabled: true, onclick: checkout }, 'confirm');
   els.clear = h('button.danger', {
     disabled: true,
     onclick: () => {
