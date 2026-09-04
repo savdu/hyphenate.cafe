@@ -9,7 +9,7 @@ import { createLocalDriver } from './drivers/local.js';
    config change, not a rewrite.
    ------------------------------------------------------------------------- */
 
-const EMPTY_MENU = { version: 1, updated: null, sections: [] };
+const EMPTY_MENU = { version: 1, updated: null, sections: [], tipOptions: [] };
 
 async function loadSeedMenu() {
   try {

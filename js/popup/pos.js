@@ -13,7 +13,7 @@ import { h, render, modal } from './dom.js';
    imports above and the reminder line in the confirm modal.
    ------------------------------------------------------------------------- */
 
-let menu = { sections: [] };
+let menu = { sections: [], tipOptions: [] };
 let orders = [];
 let cart = newCart();
 let els = {};
@@ -115,6 +115,10 @@ async function checkout() {
     lines: cart.lines.map(l => ({ ...l })),
     discount: cart.discount,
     tip: 0,
+    /* The "tip" here isn't money — see the customer-facing modal below.
+       Monetary tip presets are hidden, not deleted, same as payment method
+       right below; `tip` (cents) stays reserved for that if it ever comes back. */
+    tipChoice: null,
     status: 'queued',
     /* Only Venmo, no tip — this is a home cafe, not a full POS. Payment is
        marked separately, from the "collect" button on the orders tab, once
@@ -151,10 +155,37 @@ async function checkout() {
 
   if (!confirmed) return;
 
+  order.tipChoice = await pickTip();
+
   await store.putOrder(order);
   cart = newCart();
   drawCart();
   drawName();
+}
+
+/* Hand the screen to the customer for this one. Big tappable options, no
+   "back" — if they don't want to pick one, tapping outside or Escape skips
+   it (modal() resolves null either way). Options come from the menu object
+   so they're editable on the Menu tab, live, same as everything else there. */
+async function pickTip() {
+  const options = menu.tipOptions || [];
+  if (!options.length) return null;
+
+  return modal(done =>
+    h('div.stack', {},
+      h('div.center.stack', {},
+        h('div.muted.small', {}, 'for the customer'),
+        h('strong', {}, 'leave us a tip?')
+      ),
+      h('div.stack', { style: 'margin-top:.5em' },
+        options.map(opt =>
+          h('button.primary', { style: 'width:100%;padding:.9em', onclick: () => done(opt) }, opt))
+      ),
+      h('div.row', { style: 'justify-content:center;margin-top:.75em' },
+        h('button.ghost.tiny', { onclick: () => done(null) }, 'no thanks')
+      )
+    )
+  );
 }
 
 /* --- rendering ------------------------------------------------------------ */
@@ -274,6 +305,6 @@ export function mountPos(root) {
   drawGrid();
   drawCart();
 
-  store.onMenu(m => { menu = m || { sections: [] }; drawGrid(); drawCart(); });
+  store.onMenu(m => { menu = m || { sections: [], tipOptions: [] }; drawGrid(); drawCart(); });
   store.onOrders(list => { orders = list || []; });
 }

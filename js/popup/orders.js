@@ -56,6 +56,10 @@ function ticketNode(order) {
     l.note ? h('span.lnote', {}, ` “${l.note}”`) : null
   ));
 
+  const tipLine = order.tipChoice
+    ? h('div.small', { style: 'color:var(--color-purple)' }, `✿ tipped: ${order.tipChoice}`)
+    : null;
+
   const actions = [];
   if (order.status === 'queued') {
     actions.push(h('button', { onclick: () => patch(order, { status: 'ready' }) }, 'ready ✓'));
@@ -82,6 +86,7 @@ function ticketNode(order) {
       )
     ),
     h('ul', {}, items),
+    tipLine,
     h('div.row-between', {},
       h('span.small', {},
         // h('span', { class: order.payment.paid ? 'paid' : 'unpaid' },

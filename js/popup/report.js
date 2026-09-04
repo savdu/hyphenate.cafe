@@ -20,6 +20,15 @@ function computeItemCounts() {
   return [...counts.entries()].sort((a, b) => b[1].qty - a[1].qty);
 }
 
+function computeTipCounts() {
+  const counts = new Map();
+  for (const o of orders) {
+    if (!o.tipChoice) continue;
+    counts.set(o.tipChoice, (counts.get(o.tipChoice) || 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+}
+
 function draw(root) {
   const live = orders.filter(o => o.status !== 'void');
   const revenue = live.reduce((s, o) => s + orderTotal(o), 0);
@@ -32,6 +41,7 @@ function draw(root) {
   // }
 
   const itemCounts = computeItemCounts();
+  const tipCounts = computeTipCounts();
 
   render(root,
     h('div.stack', {},
@@ -61,6 +71,14 @@ function draw(root) {
             h('td', {}, name), h('td.n', {}, String(c.qty)), h('td.n', {}, fmt(c.revenue))))
         )
       : h('p.muted.small', {}, 'no sales yet'),
+    h('hr'),
+    h('h3', { style: 'margin-bottom:.5em' }, 'tips collected'),
+    tipCounts.length
+      ? h('table.report', {},
+          tipCounts.map(([choice, n]) => h('tr', {},
+            h('td', {}, choice), h('td.n', {}, String(n))))
+        )
+      : h('p.muted.small', {}, 'none yet'),
     // h('div.row.no-print', { style: 'margin-top:1em' },
     //   h('button', { onclick: () => window.print() }, 'print report')
     // )

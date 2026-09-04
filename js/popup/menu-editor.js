@@ -11,7 +11,7 @@ import { h, render, modal } from './dom.js';
    the POS pick it up live via store.onMenu().
    ------------------------------------------------------------------------- */
 
-let menu = { sections: [] };
+let menu = { sections: [], tipOptions: [] };
 let els = {};
 let dirty = false;
 
@@ -213,6 +213,37 @@ function drawSections() {
   );
 }
 
+/* --- tip options -------------------------------------------------------------
+
+   These are the choices on the customer-facing "leave us a tip?" screen
+   that shows up after confirming an order in the POS — see pickTip() in
+   pos.js. Not money; whatever silly (or sincere) options you list here. */
+
+function drawTipOptions() {
+  const options = menu.tipOptions || (menu.tipOptions = []);
+
+  render(els.tipOptions, options.map((opt, i) => h('div.row', {},
+    h('input.grow', {
+      type: 'text', value: opt, placeholder: 'a funny story',
+      onblur: async e => {
+        const v = e.target.value.trim();
+        if (!v) { options.splice(i, 1); drawTipOptions(); }
+        else options[i] = v;
+        markDirty();
+        await persist();
+      }
+    }),
+    h('button.ghost.tiny.danger', {
+      onclick: async () => { options.splice(i, 1); drawTipOptions(); markDirty(); await persist(); }
+    }, '✕')
+  )),
+  h('button.tiny', {
+    style: 'margin-top:.3em',
+    onclick: async () => { options.push(''); drawTipOptions(); els.tipOptions.querySelectorAll('input')[options.length - 1]?.focus(); }
+  }, '+ add option')
+  );
+}
+
 /* --- import / export --------------------------------------------------------- */
 
 function exportJson() {
@@ -245,6 +276,7 @@ async function importJson(file) {
 export function mountMenuEditor(root) {
   els = {};
   els.sections = h('div');
+  els.tipOptions = h('div');
   els.saveHint = h('span.small', {}, '');
   const fileInput = h('input', {
     type: 'file', accept: 'application/json', style: 'display:none',
@@ -258,6 +290,10 @@ export function mountMenuEditor(root) {
       els.saveHint
     ),
     els.sections,
+    h('hr'),
+    h('h3', { style: 'margin-bottom:.5em' }, 'customer tip options'),
+    h('p.small.muted', {}, 'shown to the customer after an order is confirmed'),
+    els.tipOptions,
     // h('hr'),
     // h('div.row', {},
     //   h('button', { onclick: exportJson }, 'export menu.json'),
@@ -269,8 +305,9 @@ export function mountMenuEditor(root) {
 
   store.onMenu(m => {
     if (dirty) return; // don't clobber an in-progress edit if another tab just saved
-    menu = m || { sections: [] };
+    menu = m || { sections: [], tipOptions: [] };
     drawSections();
+    drawTipOptions();
   });
 
   store.mode().then(mode => {

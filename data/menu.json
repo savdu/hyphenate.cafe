@@ -2,6 +2,7 @@
   "version": 1,
   "updated": null,
   "note": "Starting point — edit this on the Menu tab of admin.html, not by hand.",
+  "tipOptions": ["compliment", "handshake", "a funny story"],
   "sections": [
     {
       "id": "coffee",
