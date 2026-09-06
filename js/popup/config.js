@@ -17,6 +17,12 @@ export const config = {
   /* Suggested tip percentages on the checkout screen. [] hides tipping. */
   tipPresets: [0, 10, 15, 20],
 
+  /* Door code for checkin.html — post it on a card at the door. Same deal as
+     adminPasscode: it's a doorman, not security. It exists so the room fills
+     with people who are actually in your apartment, rather than anyone who
+     stumbles onto hyphenate.cafe/checkin. Entered once per phone. */
+  checkinCode: 'here',
+
   /* Prices in data/menu.json are tax-inclusive — keep the number on the
      menu the number people pay. A popup out of your apartment is not a
      registered retail operation, so there is no separate tax calculation
@@ -35,6 +41,15 @@ export const config = {
     appId: '1:1045036108152:web:f1b18406c839edff9a208d'
   },
 
-  /* Namespace for the data, in case you run a second popup later */
-  eventId: 'popup-01'
+  /* Namespace for the data, in case you run a second popup later.
+
+     This namespaces EVERYTHING — menu, orders, and the check-in room.
+     Changing it points the app at a new namespace, which seeds itself from
+     data/menu.json — but only for as long as that namespace is empty. So
+     pull the live menu down into data/menu.json BEFORE changing this, every
+     time; CLAUDE.md has the read command and the re-seed steps.
+
+     'popup-01' is the previous namespace. It still holds live data and was
+     being edited as recently as 2026-09-06 — it is not a throwaway. */
+  eventId: '20260912_hyphenate'
 };
