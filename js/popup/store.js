@@ -53,6 +53,36 @@ async function buildDriver() {
 
 const get = () => (driverPromise ??= buildDriver());
 
+/* -------------------------------------------------------------------------
+   Only hand a subscriber data that is actually different from what it last
+   saw.
+
+   Firestore re-sends the whole document whenever a listener reconnects, and
+   a tab waking back up counts as a reconnect — so pages were tearing down
+   and rebuilding their DOM for changes that never happened. The menu should
+   redraw when the menu is edited, and not otherwise.
+
+   These payloads are a few KB and arrive a handful of times an hour, so
+   comparing them as JSON is cheap and keeps the drivers free of bookkeeping.
+   ------------------------------------------------------------------------- */
+function distinct(cb) {
+  let last;
+  return value => {
+    const key = JSON.stringify(value ?? null);
+    if (key === last) return;
+    last = key;
+    cb(value);
+  };
+}
+
+/* Subscribe before the driver resolves; we wire it up once it does. */
+function subscribe(method, cb) {
+  const deliver = distinct(cb);
+  let off = null, cancelled = false;
+  get().then(d => { if (!cancelled) off = d[method](deliver); });
+  return () => { cancelled = true; off?.(); };
+}
+
 export const store = {
   ready: () => get(),
 
@@ -68,31 +98,18 @@ export const store = {
     return (await get()).saveMenu(menu);
   },
 
-  /* Subscribe before the driver resolves; we wire it up once it does. */
-  onMenu(cb) {
-    let off = null, cancelled = false;
-    get().then(d => { if (!cancelled) off = d.onMenu(cb); });
-    return () => { cancelled = true; off?.(); };
-  },
+  onMenu(cb) { return subscribe('onMenu', cb); },
 
   async getOrders() { return (await get()).getOrders(); },
   async putOrder(order) { return (await get()).putOrder(order); },
   async deleteOrder(id) { return (await get()).deleteOrder(id); },
 
-  onOrders(cb) {
-    let off = null, cancelled = false;
-    get().then(d => { if (!cancelled) off = d.onOrders(cb); });
-    return () => { cancelled = true; off?.(); };
-  },
+  onOrders(cb) { return subscribe('onOrders', cb); },
 
   /* Guests — who is checked in to the room right now. Same shape as orders. */
   async getGuests() { return (await get()).getGuests(); },
   async putGuest(guest) { return (await get()).putGuest(guest); },
   async deleteGuest(id) { return (await get()).deleteGuest(id); },
 
-  onGuests(cb) {
-    let off = null, cancelled = false;
-    get().then(d => { if (!cancelled) off = d.onGuests(cb); });
-    return () => { cancelled = true; off?.(); };
-  }
+  onGuests(cb) { return subscribe('onGuests', cb); }
 };

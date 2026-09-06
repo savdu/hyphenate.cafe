@@ -14,6 +14,8 @@ import { h, render, modal } from './dom.js';
 let menu = { sections: [], tipOptions: [] };
 let els = {};
 let dirty = false;
+let modalOpen = false;
+let pendingMenu = null;
 
 const uid = prefix => `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -26,8 +28,50 @@ function markDirty() {
 async function persist() {
   await store.saveMenu(menu);
   dirty = false;
+  /* What we just wrote is now the newest version there is, so anything that
+     arrived while we were mid-edit is stale — drop it instead of redrawing. */
+  pendingMenu = null;
   els.saveHint.textContent = 'saved';
   els.saveHint.style.color = 'var(--color-green)';
+}
+
+/* -------------------------------------------------------------------------
+   Redrawing means render(), and render() throws the existing nodes away.
+   Do that while someone is typing and the caret, the selection, and whatever
+   has been typed since the last save all go with it — which is exactly what
+   "the page reloaded while I was editing" looks like from the other side.
+
+   So an incoming menu waits in pendingMenu until the edit it would have
+   interrupted is over. It still gets applied — just a moment later.
+   ------------------------------------------------------------------------- */
+
+const typingHere = () => {
+  const el = document.activeElement;
+  return !!el
+    && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)
+    && !!els.root?.contains(el);
+};
+
+const midEdit = () => dirty || modalOpen || typingHere();
+
+function applyMenu(m) {
+  menu = m || { sections: [], tipOptions: [] };
+  drawSections();
+  drawTipOptions();
+}
+
+/* Call when an edit finishes, to let a deferred update in.
+
+   A tick late on purpose: during a blur event the field being left is still
+   document.activeElement, so checking right now would decide we are still
+   mid-edit and skip the very update we came here to apply. */
+function flushPending() {
+  setTimeout(() => {
+    if (!pendingMenu || midEdit()) return;
+    const m = pendingMenu;
+    pendingMenu = null;
+    applyMenu(m);
+  }, 0);
 }
 
 /* --- item editing ---------------------------------------------------------- */
@@ -38,6 +82,7 @@ async function editItem(section, item) {
     ? JSON.parse(JSON.stringify(item))
     : { id: uid('i'), name: '', price: 0, ingredients: '', note: '', tags: [], soldOut: false, morning: false, evening: false, mods: [] };
 
+  modalOpen = true;
   const result = await modal(done => {
     const nameInput = h('input', { type: 'text', value: draft.name, placeholder: 'oat cortado' });
     const priceInput = h('input', { type: 'number', step: '0.25', min: '0', value: (draft.price / 100).toFixed(2) });
@@ -106,9 +151,9 @@ async function editItem(section, item) {
         )
       )
     );
-  });
+  }).finally(() => { modalOpen = false; });
 
-  if (!result) return;
+  if (!result) { flushPending(); return; }
 
   if (result.deleted) {
     section.items = section.items.filter(i => i.id !== draft.id);
@@ -227,8 +272,12 @@ function drawTipOptions() {
       type: 'text', value: opt, placeholder: 'a funny story',
       onblur: async e => {
         const v = e.target.value.trim();
-        if (!v) { options.splice(i, 1); drawTipOptions(); }
-        else options[i] = v;
+        /* Clicking into a field and straight back out is not an edit —
+           saving anyway would push a no-op change to every other device. */
+        if (v === options[i]) { flushPending(); return; }
+        if (v) options[i] = v;
+        else options.splice(i, 1);
+        drawTipOptions();
         markDirty();
         await persist();
       }
@@ -275,6 +324,10 @@ async function importJson(file) {
 
 export function mountMenuEditor(root) {
   els = {};
+  els.root = root;
+  dirty = false;
+  modalOpen = false;
+  pendingMenu = null;
   els.sections = h('div');
   els.tipOptions = h('div');
   els.saveHint = h('span.small', {}, '');
@@ -304,10 +357,10 @@ export function mountMenuEditor(root) {
   );
 
   store.onMenu(m => {
-    if (dirty) return; // don't clobber an in-progress edit if another tab just saved
-    menu = m || { sections: [], tipOptions: [] };
-    drawSections();
-    drawTipOptions();
+    /* Hold anything that lands mid-edit rather than dropping it, so the
+       editor still catches up to what the other device saved. */
+    if (midEdit()) { pendingMenu = m; return; }
+    applyMenu(m);
   });
 
   store.mode().then(mode => {
