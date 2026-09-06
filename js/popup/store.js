@@ -83,5 +83,16 @@ export const store = {
     let off = null, cancelled = false;
     get().then(d => { if (!cancelled) off = d.onOrders(cb); });
     return () => { cancelled = true; off?.(); };
+  },
+
+  /* Guests — who is checked in to the room right now. Same shape as orders. */
+  async getGuests() { return (await get()).getGuests(); },
+  async putGuest(guest) { return (await get()).putGuest(guest); },
+  async deleteGuest(id) { return (await get()).deleteGuest(id); },
+
+  onGuests(cb) {
+    let off = null, cancelled = false;
+    get().then(d => { if (!cancelled) off = d.onGuests(cb); });
+    return () => { cancelled = true; off?.(); };
   }
 };

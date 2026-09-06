@@ -30,9 +30,11 @@ const write = (ns, value) => {
 export function createLocalDriver({ eventId, seedMenu }) {
   const menuNs = `${eventId}:menu`;
   const ordersNs = `${eventId}:orders`;
+  const guestsNs = `${eventId}:guests`;
 
   const menuSubs = new Set();
   const orderSubs = new Set();
+  const guestSubs = new Set();
 
   /* Cross-tab notification on the same device */
   let channel = null;
@@ -41,6 +43,7 @@ export function createLocalDriver({ eventId, seedMenu }) {
     channel.onmessage = e => {
       if (e.data === 'menu') menuSubs.forEach(cb => cb(read(menuNs, seedMenu)));
       if (e.data === 'orders') orderSubs.forEach(cb => cb(read(ordersNs, [])));
+      if (e.data === 'guests') guestSubs.forEach(cb => cb(read(guestsNs, [])));
     };
   } catch {
     /* Safari private mode and friends — fall back to the storage event only */
@@ -49,6 +52,7 @@ export function createLocalDriver({ eventId, seedMenu }) {
   window.addEventListener('storage', e => {
     if (e.key === KEY(menuNs)) menuSubs.forEach(cb => cb(read(menuNs, seedMenu)));
     if (e.key === KEY(ordersNs)) orderSubs.forEach(cb => cb(read(ordersNs, [])));
+    if (e.key === KEY(guestsNs)) guestSubs.forEach(cb => cb(read(guestsNs, [])));
   });
 
   const announce = what => {
@@ -104,6 +108,33 @@ export function createLocalDriver({ eventId, seedMenu }) {
       orderSubs.add(cb);
       cb(read(ordersNs, []));
       return () => orderSubs.delete(cb);
+    },
+
+    async getGuests() {
+      return read(guestsNs, []);
+    },
+
+    async putGuest(guest) {
+      const guests = read(guestsNs, []);
+      const i = guests.findIndex(g => g.id === guest.id);
+      if (i === -1) guests.push(guest);
+      else guests[i] = guest;
+      write(guestsNs, guests);
+      guestSubs.forEach(cb => cb(guests));
+      announce('guests');
+    },
+
+    async deleteGuest(id) {
+      const guests = read(guestsNs, []).filter(g => g.id !== id);
+      write(guestsNs, guests);
+      guestSubs.forEach(cb => cb(guests));
+      announce('guests');
+    },
+
+    onGuests(cb) {
+      guestSubs.add(cb);
+      cb(read(guestsNs, []));
+      return () => guestSubs.delete(cb);
     }
   };
 }

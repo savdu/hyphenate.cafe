@@ -9,20 +9,17 @@ const root = document.getElementById('menu-root');
 const stamp = document.getElementById('menu-stamp');
 
 function itemNode(item) {
-  const tags = (item.tags || []).map(t => h('span.badge', {}, t));
-  if (item.morning) tags.unshift(h('span.badge', {}, 'morning'));
-  if (item.evening) tags.unshift(h('span.badge', {}, 'evening'));
-  if (item.soldOut) tags.unshift(h('span.badge.eightysix', {}, 'sold out'));
+  const timeTag = item.morning ? 'morning only' : item.evening ? 'evening only' : null;
 
   return h('div.menu-item', { class: item.soldOut ? 'sold-out' : '' },
     h('div.line', {},
       h('span.name', {}, item.name),
+      timeTag && h('span.badge', {}, timeTag),
       h('span.leader'),
       h('span.price.nowrap', {}, fmt(item.price))
     ),
     item.ingredients && h('div.ingredients.small', {}, item.ingredients),
-    item.note && h('div.note.small', {}, item.note),
-    tags.length ? h('div.small', { style: 'margin-top:.25em' }, tags) : null
+    item.note && h('div.note.small', {}, item.note)
   );
 }
 

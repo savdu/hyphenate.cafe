@@ -32,6 +32,7 @@ export async function createFirebaseDriver({ eventId, seedMenu, firebaseConfig }
 
   const menuRef = doc(db, 'events', eventId, 'config', 'menu');
   const ordersRef = collection(db, 'events', eventId, 'orders');
+  const guestsRef = collection(db, 'events', eventId, 'guests');
 
   return {
     mode: 'cloud',
@@ -78,6 +79,27 @@ export async function createFirebaseDriver({ eventId, seedMenu, firebaseConfig }
         ordersRef,
         snap => cb(snap.docs.map(d => d.data())),
         err => console.error('[store] orders listener dropped', err)
+      );
+    },
+
+    async getGuests() {
+      const snap = await getDocs(guestsRef);
+      return snap.docs.map(d => d.data());
+    },
+
+    async putGuest(guest) {
+      await setDoc(doc(guestsRef, guest.id), guest);
+    },
+
+    async deleteGuest(id) {
+      await deleteDoc(doc(guestsRef, id));
+    },
+
+    onGuests(cb) {
+      return onSnapshot(
+        guestsRef,
+        snap => cb(snap.docs.map(d => d.data())),
+        err => console.error('[store] guests listener dropped', err)
       );
     }
   };

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>-hyphenate · menu</title>
+    <title>-hyphenate · check in</title>
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <link rel="stylesheet" href="css/popup.css" />
 </head>
@@ -14,18 +14,19 @@
             <div class="tag">come as you are</div>
         </header>
 
-        <main id="menu-root">
-            <p class="muted center">loading the menu…</p>
+        <div id="checkin-status" class="status-strip"></div>
+
+        <main id="checkin-root">
+            <p class="muted center">opening the room…</p>
         </main>
 
         <hr />
 
-        <footer class="center small muted stack">
-            <div><a href="checkin.html">check in →</a></div>
-            <div id="menu-stamp"></div>
+        <footer class="center small muted">
+            <a href="menu.html">the menu →</a>
         </footer>
     </div>
 
-    <script type="module" src="js/popup/menu-page.js"></script>
+    <script type="module" src="js/popup/checkin.js"></script>
 </body>
 </html>
