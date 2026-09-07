@@ -8,11 +8,12 @@
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
 
-export async function createFirebaseDriver({ eventId, seedMenu, firebaseConfig }) {
+export async function createFirebaseDriver({ eventId, seedMenu, firebaseConfig, messageWindow }) {
   const { initializeApp } = await import(`${SDK}/firebase-app.js`);
   const {
     initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-    doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot
+    doc, collection, getDoc, getDocs, setDoc, deleteDoc, onSnapshot,
+    query, orderBy, limit
   } = await import(`${SDK}/firebase-firestore.js`);
 
   const app = initializeApp(firebaseConfig);
@@ -33,6 +34,13 @@ export async function createFirebaseDriver({ eventId, seedMenu, firebaseConfig }
   const menuRef = doc(db, 'events', eventId, 'config', 'menu');
   const ordersRef = collection(db, 'events', eventId, 'orders');
   const guestsRef = collection(db, 'events', eventId, 'guests');
+  const messagesRef = collection(db, 'events', eventId, 'messages');
+
+  /* Unlike guests and orders, messages only ever accumulate. Reading the
+     whole collection on every device that opens the page would grow all day,
+     so the listener is capped at the most recent slice — that's all the room
+     shows anyway. Ordering on a single field needs no composite index. */
+  const recentMessages = query(messagesRef, orderBy('at', 'desc'), limit(messageWindow));
 
   return {
     mode: 'cloud',
@@ -100,6 +108,25 @@ export async function createFirebaseDriver({ eventId, seedMenu, firebaseConfig }
         guestsRef,
         snap => cb(snap.docs.map(d => d.data())),
         err => console.error('[store] guests listener dropped', err)
+      );
+    },
+
+    /* Oldest-first on the way out, so callers never think about the fact
+       that the query had to run newest-first to apply its limit. */
+    async getMessages() {
+      const snap = await getDocs(recentMessages);
+      return snap.docs.map(d => d.data()).reverse();
+    },
+
+    async postMessage(message) {
+      await setDoc(doc(messagesRef, message.id), message);
+    },
+
+    onMessages(cb) {
+      return onSnapshot(
+        recentMessages,
+        snap => cb(snap.docs.map(d => d.data()).reverse()),
+        err => console.error('[store] messages listener dropped', err)
       );
     }
   };

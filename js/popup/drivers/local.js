@@ -27,14 +27,16 @@ const write = (ns, value) => {
   }
 };
 
-export function createLocalDriver({ eventId, seedMenu }) {
+export function createLocalDriver({ eventId, seedMenu, messageWindow }) {
   const menuNs = `${eventId}:menu`;
   const ordersNs = `${eventId}:orders`;
   const guestsNs = `${eventId}:guests`;
+  const messagesNs = `${eventId}:messages`;
 
   const menuSubs = new Set();
   const orderSubs = new Set();
   const guestSubs = new Set();
+  const messageSubs = new Set();
 
   /* Cross-tab notification on the same device */
   let channel = null;
@@ -44,6 +46,7 @@ export function createLocalDriver({ eventId, seedMenu }) {
       if (e.data === 'menu') menuSubs.forEach(cb => cb(read(menuNs, seedMenu)));
       if (e.data === 'orders') orderSubs.forEach(cb => cb(read(ordersNs, [])));
       if (e.data === 'guests') guestSubs.forEach(cb => cb(read(guestsNs, [])));
+      if (e.data === 'messages') messageSubs.forEach(cb => cb(read(messagesNs, [])));
     };
   } catch {
     /* Safari private mode and friends — fall back to the storage event only */
@@ -53,6 +56,7 @@ export function createLocalDriver({ eventId, seedMenu }) {
     if (e.key === KEY(menuNs)) menuSubs.forEach(cb => cb(read(menuNs, seedMenu)));
     if (e.key === KEY(ordersNs)) orderSubs.forEach(cb => cb(read(ordersNs, [])));
     if (e.key === KEY(guestsNs)) guestSubs.forEach(cb => cb(read(guestsNs, [])));
+    if (e.key === KEY(messagesNs)) messageSubs.forEach(cb => cb(read(messagesNs, [])));
   });
 
   const announce = what => {
@@ -135,6 +139,25 @@ export function createLocalDriver({ eventId, seedMenu }) {
       guestSubs.add(cb);
       cb(read(guestsNs, []));
       return () => guestSubs.delete(cb);
+    },
+
+    async getMessages() {
+      return read(messagesNs, []);
+    },
+
+    /* Trimmed to the same window the cloud driver queries, so the room looks
+       the same either way and one long afternoon can't fill localStorage. */
+    async postMessage(message) {
+      const messages = read(messagesNs, []).concat(message).slice(-messageWindow);
+      write(messagesNs, messages);
+      messageSubs.forEach(cb => cb(messages));
+      announce('messages');
+    },
+
+    onMessages(cb) {
+      messageSubs.add(cb);
+      cb(read(messagesNs, []));
+      return () => messageSubs.delete(cb);
     }
   };
 }

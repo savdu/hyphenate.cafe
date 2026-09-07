@@ -29,12 +29,55 @@ extensionless URLs (`hyphenate.cafe/menu` works, no `.html` needed).
 
 ## Styling conventions
 
-Atom One Light palette (CSS custom properties in `:root`), Menlo monospace,
-`font-size: small` for body copy. `css/main.css` is the concept site;
-`css/popup.css` is a separate sheet for the popup pages — same palette,
-bigger tap targets since admin.html runs on a phone/iPad all day. Form
-inputs are pinned to `font-size: 16px` specifically (not `small`) to avoid
-iOS Safari's auto-zoom-on-focus below that threshold.
+Atom One Light palette (CSS custom properties in `:root`), Menlo monospace.
+`css/main.css` is the concept site; `css/popup.css` is a separate sheet for
+the popup pages — bigger tap targets, since admin.html runs on a phone/iPad
+all day.
+
+**The two sheets have separate `:root` blocks and no shared file, so every
+token exists twice and they drift silently.** They are kept in step by hand.
+As of now `--color-muted` (`#6b7280`) and `--color-rule` (`#e3e5e9`) are
+defined in both, and the "come as you are" tagline is deliberately identical
+across index, menu and check-in: `--color-muted`, italic. When you change a
+token in one sheet, check whether the other one has it too.
+
+**One divergence is still open.** `css/main.css` never sets `body { color }`,
+so the whole concept site renders in the browser's default black rather than
+`--color-fg` (`#383a42`) like the popup pages. The tagline had to be given an
+explicit grey for that reason — it had nothing sensible to inherit. Setting a
+body colour in `main.css` would unify the two, but it restyles every character
+of the homepage including the ASCII scene, so it was left alone deliberately
+rather than slipped in as a fix. Decide it on purpose if you touch it.
+
+**Two systems are written into the top of `css/popup.css` as comments — read
+them before adding a size or colouring something new.** Both were arrived at
+by auditing the rendered pages, not the stylesheet, and both had drifted
+before:
+
+- **Four type sizes, each meaning something.** `16px` you type in it (form
+  fields, and buttons sitting among them) · `13px` you read it (the base) ·
+  `11px` you glance at it (time, sync status, hints, badges, captions) ·
+  `20px` the close-up in a guest's sheet. It had been seven, including a
+  14.3px one-off for six buttons and a 10px tier holding chat messages.
+  Something that needs to stand out almost always wants padding, weight or
+  colour — reach for those before a fifth size.
+- **One job per colour.** fg everything you read · muted everything secondary
+  · green money only · red needs attention · blue links only · cyan a
+  person's own words · purple who is speaking · orange a special request.
+  The palette is a *syntax-highlighting* theme, so its colours arrive meaning
+  "string" and "keyword" rather than anything about an interface, and they
+  take second jobs easily — green had come to mean both a price and a healthy
+  connection.
+
+Two specifics worth not undoing:
+
+- Form inputs are pinned to `font-size: 16px` (not `small`) because iOS
+  Safari auto-zooms the page on focus of any field below that. It looks like
+  the odd value in the scale and it is the one that must not move.
+- `--color-muted` is `#6b7280`, not the palette's original `#9199a6`. That
+  was 2.75:1 against the page — under the 4.5:1 AA floor — while carrying
+  the sync strip, timestamps and captions at the smallest size in the scale.
+  It is only ever used as a text colour, never a border or fill.
 
 ## `js/popup/` architecture
 
@@ -65,7 +108,8 @@ iOS Safari's auto-zoom-on-focus below that threshold.
   roster of poses, `guest.js` is identity + the write actions, `room.js`
   renders the floor and the guest sheets. Guests are a third collection in
   the store alongside menu and orders (`getGuests`/`putGuest`/`deleteGuest`/
-  `onGuests`), implemented in both drivers the same way. No Firestore rules
+  `onGuests`), and messages are a fourth (`getMessages`/`postMessage`/
+  `onMessages`), implemented in both drivers the same way. No Firestore rules
   change was needed — the existing rule already matches
   `events/{eventId}/{document=**}`.
 
@@ -175,6 +219,29 @@ iOS Safari's auto-zoom-on-focus below that threshold.
   instructions, and `guest.setDetails()` is still exported and working. The
   customization set is fixed (no free-text emoji): one less thing to
   moderate, and one less way to get a glyph that won't render in Menlo.
+
+- **A guest's note and the chat log are separate stores, deliberately.**
+  `guest.say()` writes both: the note is a single field on your own record,
+  so the bubble above your figure is always just your latest; the message
+  goes to its own `messages` collection, which accumulates. Deriving the log
+  from notes instead — which is how it started — meant your second message
+  silently replaced your first, which reads as a row of status lines rather
+  than a room talking. A message also carries the author's `name` rather than
+  looking it up, because it has to still make sense after that guest has
+  headed out and their figure is gone.
+
+- **Messages are the one collection that only grows.** Both drivers hand back
+  a recent window rather than everything — Firestore via
+  `orderBy('at','desc')` + `limit` (single field, so no composite index), the
+  local driver by trimming on write. `LOG_LINES` in `room.js` then caps what
+  is actually drawn. Without that, every phone opening the page would read the
+  whole day's chat, which grows all afternoon.
+
+- **The composer lives outside the log element.** The log is re-rendered every
+  time anyone says anything; if the input were inside it, an incoming message
+  would wipe what you were halfway through typing and drop the keyboard on a
+  phone. The input is also cleared before the write, not after — on a slow
+  connection the wait is long enough to double-send into.
 
 - **The activity list is four, with seven more commented out.**
   `js/popup/activities.js` keeps the cut poses in a comment block rather

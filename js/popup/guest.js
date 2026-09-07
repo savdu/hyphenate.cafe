@@ -34,7 +34,7 @@ const write = (k, value) => {
   try { localStorage.setItem(key(k), JSON.stringify(value)); } catch { /* full or blocked */ }
 };
 
-const uid = () => `g-${Math.random().toString(36).slice(2, 8)}`;
+const uid = prefix => `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
 
 /* --- the door ------------------------------------------------------------ */
 
@@ -81,13 +81,12 @@ const save = async () => {
 export async function join({ name, emoji, activity }) {
   const now = Date.now();
   mine = {
-    id: uid(),
+    id: uid('g'),
     name: String(name).trim().slice(0, NAME_MAX),
     activity,
     emoji: emoji || '',
     note: '',
     joinedAt: now,
-    noteAt: 0,
     lastSeen: now,
   };
   await save();
@@ -103,11 +102,36 @@ export async function setActivity(activity) {
 export async function setNote(note) {
   if (!mine) return;
   const text = String(note).trim().slice(0, NOTE_MAX);
-  const now = Date.now();
-  /* noteAt orders the "what's happening" log, so it only moves when the note
-     actually changes — re-saving the same words shouldn't jump the queue. */
-  mine = { ...mine, note: text, noteAt: text && text !== mine.note ? now : mine.noteAt, lastSeen: now };
+  mine = { ...mine, note: text, lastSeen: Date.now() };
   await save();
+}
+
+/* Saying something to the room. One action, two effects: it becomes the note
+   floating above your figure, and it joins the log underneath.
+
+   The two are stored separately on purpose. The note is a single field on
+   your own record, so it's always just your latest — that's what makes the
+   bubble above your head current rather than a pile. The log is its own
+   collection, so it accumulates and keeps what people said after they've
+   moved on to saying something else, which is the part that makes it read
+   as a room talking rather than a row of status lines.
+
+   The message carries your name rather than looking it up later: it's a
+   record of who said what at the time, and it has to still make sense once
+   you've headed out and your figure is gone. */
+export async function say(text) {
+  if (!mine) return false;
+  const body = String(text).trim().slice(0, NOTE_MAX);
+  if (!body) return false;
+
+  const now = Date.now();
+  mine = { ...mine, note: body, lastSeen: now };
+
+  await Promise.all([
+    save(),
+    store.postMessage({ id: uid('m'), guestId: mine.id, name: mine.name, text: body, at: now })
+  ]);
+  return true;
 }
 
 export async function setDetails({ name, emoji }) {

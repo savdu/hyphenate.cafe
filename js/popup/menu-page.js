@@ -1,4 +1,4 @@
-import { store } from './store.js';
+import { store, itemDescription, isItemHidden } from './store.js';
 import { fmt } from './money.js';
 import { h, render } from './dom.js';
 
@@ -8,23 +8,31 @@ import { h, render } from './dom.js';
 const root = document.getElementById('menu-root');
 const stamp = document.getElementById('menu-stamp');
 
+function timeTag(item) {
+  if (item.morning && item.evening) return 'all day';
+  if (item.morning) return 'morning only';
+  if (item.evening) return 'evening only';
+  return null;
+}
+
 function itemNode(item) {
-  const timeTag = item.morning ? 'morning only' : item.evening ? 'evening only' : null;
+  const description = itemDescription(item);
 
   return h('div.menu-item', { class: item.soldOut ? 'sold-out' : '' },
     h('div.line', {},
       h('span.name', {}, item.name),
-      timeTag && h('span.badge', {}, timeTag),
+      h('span.badge', {}, timeTag(item)),
       h('span.leader'),
       h('span.price.nowrap', {}, fmt(item.price))
     ),
-    item.ingredients && h('div.ingredients.small', {}, item.ingredients),
-    item.note && h('div.note.small', {}, item.note)
+    description && h('div.description.small', {}, description)
   );
 }
 
 function sectionNode(section) {
-  const items = section.items || [];
+  /* Hidden items (see store.js) are off the public menu entirely, not just
+     unbadged. */
+  const items = (section.items || []).filter(item => !isItemHidden(item));
   if (!items.length) return null;
   return h('section.menu-section', {},
     h('h2', {}, section.name),

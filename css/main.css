@@ -8,6 +8,8 @@
     --color-cyan:   #0997b3;
     --color-fg:     #383a42;
     --color-bg:     #fafafa;
+    --color-rule:   #e3e5e9;
+    --color-muted:  #6b7280;   /* same value the popup sheet uses */
 }
 
 body {
@@ -64,6 +66,74 @@ details[open] summary::after {
 
 a {
     color: var(--color-blue);
+}
+
+/* The tagline, matching the one on the menu and check-in pages. Worth knowing:
+   main.css never sets a body colour, so everything else on this page is the
+   browser's default black rather than --color-fg — which is why this line
+   needed an explicit grey to match rather than just inheriting one. */
+.tag {
+    color: var(--color-muted);
+    font-style: italic;
+}
+
+/* --- the two things you can actually do here --- */
+
+/* Shaped like the availability tags on the menu — hairline box, 2px corner,
+   nothing shouting. Two deliberate departures: these sit at the body size
+   rather than the tags' smaller one, and they keep the link colour instead of
+   the tags' muted grey, because a tag is metadata you glance at and these are
+   the only two actions on the page. Grey would read as disabled.
+
+   Built for a thumb, not a cursor. Nearly every guest meets this page on a
+   phone, standing in a doorway, so the sizing below is ergonomic rather than
+   typographic — which is why it's in px: a tap target shouldn't grow or
+   shrink with the type scale. */
+.links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75em;          /* far enough apart that one thumb can't catch both */
+    justify-content: center;
+    margin: 0 0 1.5em;
+}
+
+.links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;     /* the tap-target floor; 39px was a squeeze */
+    padding: 0 1.1em;
+    border: 1px solid var(--color-rule);
+    border-radius: 2px;
+    color: var(--color-blue);
+    text-decoration: none;
+    white-space: nowrap;
+
+    /* No waiting to see whether the tap was a double-tap-to-zoom. */
+    touch-action: manipulation;
+
+    /* iOS paints its own grey box on tap. Keep that feedback — it's the one
+       thing guaranteed to fire on touch — but tint it to the link colour
+       instead of leaving it grey. */
+    -webkit-tap-highlight-color: rgba(64, 120, 242, 0.15);
+}
+
+/* Hover is a pointer idea. Leaving it ungated is actively wrong on a phone:
+   iOS applies :hover on tap and then *keeps* it until you touch something
+   else, so a link a guest already followed sits there still looking hovered. */
+@media (hover: hover) {
+    .links a:hover { border-color: var(--color-blue); }
+}
+
+/* What a guest on a phone actually gets — the press itself. */
+.links a:active {
+    border-color: var(--color-blue);
+    background: rgba(64, 120, 242, 0.08);
+}
+
+.links a:focus-visible {
+    border-color: var(--color-blue);
+    outline: none;
 }
 
 

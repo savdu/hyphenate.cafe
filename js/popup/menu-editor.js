@@ -1,4 +1,4 @@
-import { store } from './store.js';
+import { store, itemDescription, isItemHidden } from './store.js';
 import { toCents, fmt } from './money.js';
 import { h, render, modal } from './dom.js';
 
@@ -80,15 +80,20 @@ async function editItem(section, item) {
   const isNew = !item;
   const draft = item
     ? JSON.parse(JSON.stringify(item))
-    : { id: uid('i'), name: '', price: 0, ingredients: '', note: '', tags: [], soldOut: false, morning: false, evening: false, mods: [] };
+    : { id: uid('i'), name: '', price: 0, description: '', soldOut: false, morning: false, evening: false, mods: [] };
+
+  /* Items saved before ingredients/note/tags were folded into `description`
+     still carry those old fields — pull them into description so editing
+     (and saving) an old item migrates it instead of silently dropping text. */
+  if (item && draft.description === undefined) {
+    draft.description = itemDescription(draft);
+  }
 
   modalOpen = true;
   const result = await modal(done => {
     const nameInput = h('input', { type: 'text', value: draft.name, placeholder: 'oat cortado' });
     const priceInput = h('input', { type: 'number', step: '0.25', min: '0', value: (draft.price / 100).toFixed(2) });
-    const ingInput = h('input', { type: 'text', value: draft.ingredients, placeholder: 'espresso, oat milk' });
-    const noteInput = h('input', { type: 'text', value: draft.note, placeholder: 'optional flavor note' });
-    const tagsInput = h('input', { type: 'text', value: (draft.tags || []).join(', '), placeholder: 'vegan, gluten' });
+    const descInput = h('textarea', { rows: 2, value: draft.description, placeholder: 'espresso, oat milk — shipped from san francisco' });
     const soldOutBox = h('input', { type: 'checkbox', checked: !!draft.soldOut });
     const morningBox = h('input', { type: 'checkbox', checked: !!draft.morning });
     const eveningBox = h('input', { type: 'checkbox', checked: !!draft.evening });
@@ -118,11 +123,9 @@ async function editItem(section, item) {
       h('strong', {}, isNew ? 'new item' : 'edit item'),
       h('label.field', {}, h('span', {}, 'name'), nameInput),
       h('label.field', {}, h('span', {}, 'price'), priceInput),
-      h('label.field', {}, h('span', {}, 'ingredients'), ingInput),
-      h('label.field', {}, h('span', {}, 'note'), noteInput),
-      h('label.field', {}, h('span', {}, 'tags (comma separated)'), tagsInput),
+      h('label.field', {}, h('span', {}, 'description'), descInput),
       h('label.mod-toggle', {}, soldOutBox, 'sold out'),
-      h('div', {}, h('span.muted.small', {}, 'when is this served? (leave both off for all day)')),
+      h('div', {}, h('span.muted.small', {}, 'when is this served? (check both for all day — leave both off to hide from the menu)')),
       h('div', {},
         h('label.mod-toggle', {}, morningBox, 'morning (10am–2pm)'),
         h('label.mod-toggle', {}, eveningBox, 'evening (5–10pm)')
@@ -138,9 +141,7 @@ async function editItem(section, item) {
                 id: draft.id,
                 name: nameInput.value.trim() || 'untitled',
                 price: toCents(priceInput.value),
-                ingredients: ingInput.value.trim(),
-                note: noteInput.value.trim(),
-                tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
+                description: descInput.value.trim(),
                 soldOut: soldOutBox.checked,
                 morning: morningBox.checked,
                 evening: eveningBox.checked,
@@ -161,6 +162,12 @@ async function editItem(section, item) {
     section.items.push(result.item);
   } else {
     Object.assign(item, result.item);
+    /* Clear out the old ingredients/note/tags fields this item may still
+       carry from before they were folded into description, so saving an
+       old item actually migrates it rather than leaving stale duplicates. */
+    delete item.ingredients;
+    delete item.note;
+    delete item.tags;
   }
   markDirty();
   drawSections();
@@ -215,22 +222,21 @@ async function move(list, item, dir) {
 /* --- rendering --------------------------------------------------------------- */
 
 const daypartLabel = item => {
-  if (item.morning && item.evening) return 'morning, evening';
-  if (item.morning) return 'morning';
-  if (item.evening) return 'evening';
-  return 'all day';
+  if (isItemHidden(item)) return 'hidden';
+  if (item.morning && item.evening) return 'all day';
+  return item.morning ? 'morning' : 'evening';
 };
 
 function itemRow(section, item) {
   return h('div.row-between', { style: 'padding:.35em 0;border-top:1px dotted var(--color-rule)' },
-    h('span.grow', { style: item.soldOut ? 'opacity:.5;text-decoration:line-through' : '' },
+    h('span.grow', { style: item.soldOut ? 'opacity:.5;text-decoration:line-through' : (isItemHidden(item) ? 'opacity:.5' : '') },
       `${item.name} — ${fmt(item.price)} `,
       h('span.muted.small', {}, `(${daypartLabel(item)})`)),
     h('div.row', {},
       h('button.ghost.tiny', { onclick: () => move(section.items, item, -1) }, '↑'),
       h('button.ghost.tiny', { onclick: () => move(section.items, item, 1) }, '↓'),
-      h('button.tiny', { onclick: () => toggleSoldOut(item) }, item.soldOut ? 'available' : 'sold out!'),
-      h('button.tiny', { onclick: () => editItem(section, item) }, 'edit')
+      h('button.tiny', { onclick: () => editItem(section, item) }, 'edit'),
+      h('button.tiny', { onclick: () => toggleSoldOut(item) }, item.soldOut ? 'available' : 'sold out!')
     )
   );
 }

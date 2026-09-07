@@ -11,6 +11,24 @@ import { createLocalDriver } from './drivers/local.js';
 
 const EMPTY_MENU = { version: 1, updated: null, sections: [], tipOptions: [] };
 
+/* Messages only ever accumulate, so both drivers cap how much they keep —
+   this is that cap, owned in one place so it can't drift between them. */
+const MESSAGE_WINDOW = 60;
+
+/* ingredients/note/tags used to be three separate, overlapping fields on a
+   menu item — folded into one `description` field. Items saved before that
+   change still carry the old fields under their old names until reopened
+   and saved in the editor, so stitch those together rather than showing
+   nothing. Shared by the editor and the public menu so the fallback can't
+   drift between the two. */
+export const itemDescription = item =>
+  item.description || [item.ingredients, item.note].filter(Boolean).join(' — ');
+
+/* Neither box checked means the item isn't being offered right now — kept
+   in the menu data, just not shown. One place to ask, so every screen that
+   reads a menu item agrees on what "hidden" means. */
+export const isItemHidden = item => !item.morning && !item.evening;
+
 async function loadSeedMenu() {
   try {
     const res = await fetch('data/menu.json', { cache: 'no-store' });
@@ -32,21 +50,21 @@ async function buildDriver() {
     try {
       const { createFirebaseDriver } = await import('./drivers/firebase.js');
       const driver = await createFirebaseDriver({
-        eventId, seedMenu, firebaseConfig: config.firebase
+        eventId, seedMenu, firebaseConfig: config.firebase, messageWindow: MESSAGE_WINDOW
       });
       await driver.ready();
       return driver;
     } catch (err) {
       /* Never let a sync failure take down the register mid-service. */
       console.error('[store] cloud sync failed, falling back to this device only', err);
-      const driver = createLocalDriver({ eventId, seedMenu });
+      const driver = createLocalDriver({ eventId, seedMenu, messageWindow: MESSAGE_WINDOW });
       await driver.ready();
       driver.degraded = true;
       return driver;
     }
   }
 
-  const driver = createLocalDriver({ eventId, seedMenu });
+  const driver = createLocalDriver({ eventId, seedMenu, messageWindow: MESSAGE_WINDOW });
   await driver.ready();
   return driver;
 }
@@ -111,5 +129,13 @@ export const store = {
   async putGuest(guest) { return (await get()).putGuest(guest); },
   async deleteGuest(id) { return (await get()).deleteGuest(id); },
 
-  onGuests(cb) { return subscribe('onGuests', cb); }
+  onGuests(cb) { return subscribe('onGuests', cb); },
+
+  /* Messages — what the room has been saying. Unlike menu, orders and guests,
+     this collection only grows, so both drivers hand back a recent window
+     rather than everything. Always oldest-first. */
+  async getMessages() { return (await get()).getMessages(); },
+  async postMessage(message) { return (await get()).postMessage(message); },
+
+  onMessages(cb) { return subscribe('onMessages', cb); }
 };

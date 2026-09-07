@@ -107,7 +107,7 @@ function showOnboarding() {
       h('p.center', {}, 'and who are you?'),
       h('div.center', {}, preview),
       h('label.field', {}, h('span', {}, 'name'), name),
-      h('label.field', {}, h('span', {}, 'customization (optional)'),
+      h('label.field', {}, h('span', {}, 'hat (optional)'),
         emojiPicker(emoji, v => { emoji = v; render(previewEmoji, v); })),
       error,
       h('div.row-between', {},

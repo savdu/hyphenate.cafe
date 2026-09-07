@@ -188,11 +188,13 @@ by the door. That's it — there's nothing to run and nothing to watch.
    that floats above their figure — with a live preview before committing.
    There's no free-text emoji field: it's a fixed set, so there's nothing
    to moderate and nothing that fails to render next to the ASCII.
-4. Lands in the room. Tapping their own figure lets them change what they're
-   up to, add a public note ("this egg sandwich is soooo good"), or head out.
-   Notes show above the figure and collect in a *what's happening* log under
-   the floorboards. Name and customization are set once, on the way in, and
-   can't be changed from the room — deliberately, to keep that menu short.
+4. Lands in the room, which works like a small chat room. There's a box
+   under *what's happening*: type into it and what you say does two things at
+   once — it becomes the note floating above your figure, and it joins the
+   conversation below. The log keeps everything said, oldest at the top and
+   newest against the box; your figure shows only your latest.
+5. Tapping their own figure is now just for changing what they're up to, or
+   heading out. Name and customization are set once, on the way in.
 
 Tapping *someone else's* figure just shows their details — messaging between
 guests is the next phase, not built yet.

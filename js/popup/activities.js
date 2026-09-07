@@ -36,46 +36,7 @@ export const activities = [
       { face: '(◠ᵕ◠)', body: '/[≡]\\' },
     ],
   },
-  homepage('gossip', 1, 'catching up on the gossip'),
-
-  /* --- cut, kept for easy restoring -------------------------------------
-     These worked and are only out because four choices read better on a
-     phone than eleven. Anyone still checked in under one of these ids falls
-     back to the first activity above, so putting one back mid-event is safe.
-
-  homepage('zoned-out', 6, 'zoned out'),
-  homepage('grind', 5, 'grind mode'),
-  homepage('together', 2, 'here with someone'),
-  homepage('caffeinated', 3, 'third coffee of the day'),
-  {
-    // The open mouth is the same ﹃ the zoned-out figure uses, with happier
-    // eyes — and the sandwich in hand gets shorter between frames.
-    id: 'eating',
-    label: 'eating something good',
-    frames: [
-      { face: '(ᵕ﹃ᵕ)', body: '/[=]\\' },
-      { face: '(ᵕ﹃ᵕ)', body: '/[-]\\' },
-    ],
-  },
-  {
-    id: 'wine',
-    label: 'wine-ing',
-    frames: [
-      { face: '(ˊᵕˋ)', body: '\\ Y /' },
-      { face: '(ˊ▽ˋ)', body: '\\ Y /' },
-    ],
-  },
-  {
-    // Words coming out. The frames are different widths on purpose; poseText
-    // pads them to a common box so the figure doesn't jitter.
-    id: 'talking',
-    label: 'deep in conversation',
-    frames: [
-      { face: '(•◡•)~', body: '/|\\' },
-      { face: '(•◡•)~~', body: '/|\\' },
-    ],
-  },
-  ------------------------------------------------------------------------ */
+  homepage('gossip', 1, 'catching up on gossip'),
 ];
 
 export const activityById = id => activities.find(a => a.id === id) || activities[0];
