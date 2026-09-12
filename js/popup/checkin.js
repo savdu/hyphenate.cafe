@@ -93,6 +93,10 @@ function showOnboarding() {
     const error = h('p.small.center', { style: 'color:var(--color-red)' });
 
     render(root, h('form.stack', {
+      /* The write behind this can take a moment on bad wifi — up to the
+         store's cloud deadline before it gives up and goes local. Without
+         feedback the button just sits there looking untapped, so a guest
+         taps again, or reloads, and neither helps. Say what's happening. */
       onsubmit: async e => {
         e.preventDefault();
         if (!name.value.trim()) {
@@ -100,8 +104,20 @@ function showOnboarding() {
           name.focus();
           return;
         }
-        await guest.join({ name: name.value, emoji, activity: picked });
-        showRoom();
+        const button = e.target.querySelector('button[type=submit]');
+        const label = button.textContent;
+        button.disabled = true;
+        button.textContent = 'checking you in…';
+        render(error, '');
+        try {
+          await guest.join({ name: name.value, emoji, activity: picked });
+          showRoom();   /* replaces this form, so the button never comes back */
+        } catch (err) {
+          console.error('[checkin] could not check in', err);
+          button.disabled = false;
+          button.textContent = label;
+          render(error, "couldn't reach the room — tap to try again");
+        }
       }
     },
       h('p.center', {}, 'and who are you?'),
@@ -139,8 +155,17 @@ store.mode().then(mode => {
   if (mode === 'cloud') return;
   const strip = document.getElementById('checkin-status');
   if (!strip) return;
-  render(strip, h('span.dot.degraded', {}, '●'),
-    " this room isn't syncing — you may be the only one in it");
+  render(strip,
+    h('span.dot.degraded', {}, '●'),
+    " this room isn't syncing — you may be the only one in it. ",
+    /* Reloading is the recovery, so offer it rather than leaving a guest to
+       work out that a hard refresh is the trick. It has to be a reload: the
+       driver is built once and cached, and every live subscription on the
+       page is bound to that instance, so retrying in place would mean
+       rebuilding all of them. A reload does it in one line and can't leave
+       half the page wired to a dead driver. */
+    h('button.ghost.tiny', { onclick: () => location.reload() }, 'try again')
+  );
 });
 
 if (!guest.isUnlocked()) showDoor();
