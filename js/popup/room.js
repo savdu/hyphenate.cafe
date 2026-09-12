@@ -299,7 +299,7 @@ export function mountRoom(root, { onLeft }) {
     }
   },
     sayInput,
-    h('button.primary', { type: 'submit' }, 'say')
+    h('button.primary', { type: 'submit' }, 'send')
   );
 
   const view = h('div.room', {},

@@ -503,13 +503,23 @@ table.report td.n, table.report th.n { text-align: right; }
 .guest[data-me='true'] { border-color: var(--color-rule); background: rgba(64, 120, 242, 0.05); }
 .guest[data-stale='true'] { opacity: 0.45; }
 
-/* Two lines reserved, for the same reason .g-act reserves two: at the base
-   size a longer name wraps, and because cells are bottom-aligned that lifts
-   one figure above the row and the floor stops reading as a floor. */
+/* One line, always — trimmed with an ellipsis rather than wrapped.
+
+   This used to reserve two lines instead, so that a name long enough to wrap
+   didn't lift its figure above the rest of the row (cells are bottom-aligned,
+   so everything below the figure pushes it up). But almost every name is one
+   line, and the reserved second line showed as a gap between the name and the
+   activity under it.
+
+   Holding every name to a single line settles both: no gap, and the figures
+   still stand on one floor. A name too long for its column is cut short here
+   and shown in full when you tap the figure. */
 .guest .g-name {                    /* base — the most important text in the room */
     line-height: 1.25;
-    min-height: 2.5em;
-    overflow-wrap: anywhere;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 /* Deliberately not blue: blue is the link colour everywhere else, and colouring
    a name with it suggests the name is clickable when the whole cell is. Your

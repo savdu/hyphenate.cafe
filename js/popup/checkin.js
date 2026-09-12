@@ -24,14 +24,14 @@ const leaveRoom = () => { unmountRoom?.(); unmountRoom = null; };
 function showDoor() {
   leaveRoom();
   const input = h('input', {
-    type: 'text', placeholder: 'door code', autocomplete: 'off',
+    type: 'text', placeholder: 'password', autocomplete: 'off',
     autocapitalize: 'none', autocorrect: 'off'
   });
   const error = h('p.small', { style: 'color:var(--color-red)' });
 
   render(root, h('div.stack.center.door', {},
-    h('p', {}, 'come on in'),
-    h('p.muted.small', {}, "there's a code on the card by the door"),
+    // h('p', {}, 'come on in'),
+    h('p.muted.small', {}, "neither ---- nor there"),
     h('form.stack', {
       onsubmit: e => {
         e.preventDefault();
