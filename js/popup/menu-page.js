@@ -3,7 +3,20 @@ import { fmt } from './money.js';
 import { h, render } from './dom.js';
 
 /* Public menu. Read-only, live: when the menu is edited on admin.html this
-   page updates in place (instantly with cloud sync, on reload without it). */
+   page updates in place (instantly with cloud sync, on reload without it).
+
+   The first paint deliberately does NOT wait for the store. data/menu.json is
+   a static file on this origin, so it needs no Firebase and no network beyond
+   the one that served the page — it renders immediately, and the live menu
+   replaces it a moment later.
+
+   This matters because the failure that actually bites is a hang, not an
+   error. A refused request is caught and falls back in a tenth of a second;
+   a request that is accepted and never answered — flaky wifi, a captive
+   portal, a bad cell handoff — leaves the driver promise pending forever,
+   so a subscriber alone would sit on "loading the menu…" until the guest
+   thought to hard-refresh. A guest standing at the counter should never see
+   that. Worst case now they see the committed menu instead of the live one. */
 
 const root = document.getElementById('menu-root');
 const stamp = document.getElementById('menu-stamp');
@@ -55,4 +68,13 @@ function draw(menu) {
   }
 }
 
-store.onMenu(draw);
+let liveMenuArrived = false;
+
+store.onMenu(menu => { liveMenuArrived = true; draw(menu); });
+
+/* Whichever wins, the live menu wins — the seed must never paint over it if
+   the fetch happens to resolve second. */
+fetch('data/menu.json', { cache: 'no-store' })
+  .then(res => res.json())
+  .then(seed => { if (!liveMenuArrived) draw(seed); })
+  .catch(() => { /* the store is still coming; leave the loading line up */ });

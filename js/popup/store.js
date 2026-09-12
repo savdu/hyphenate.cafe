@@ -40,6 +40,32 @@ async function loadSeedMenu() {
   }
 }
 
+/* -------------------------------------------------------------------------
+   A deadline on bringing the cloud up.
+
+   Every cloud failure mode was handled except the one that actually happens
+   on bad wifi: a request that is accepted and then never answered. Both the
+   SDK import and the first read after it can hang indefinitely — and since
+   every page waits on this one driver promise, a hang meant they all waited
+   with it, forever, until someone thought to hard-refresh.
+
+   Ten seconds, not two: this is meant to catch a genuine hang, not to punish
+   a slow connection. Dropping the register to local-only because the venue
+   wifi took four seconds would be a worse bug than the one being fixed, so
+   it only fires well after any working connection would have finished.
+   ------------------------------------------------------------------------- */
+const CLOUD_DEADLINE_MS = 10000;
+
+function withDeadline(promise, ms) {
+  let timer;
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`cloud driver did not start within ${ms}ms`)), ms);
+    })
+  ]);
+}
+
 let driverPromise = null;
 
 async function buildDriver() {
@@ -48,12 +74,14 @@ async function buildDriver() {
 
   if (config.firebase) {
     try {
-      const { createFirebaseDriver } = await import('./drivers/firebase.js');
-      const driver = await createFirebaseDriver({
-        eventId, seedMenu, firebaseConfig: config.firebase, messageWindow: MESSAGE_WINDOW
-      });
-      await driver.ready();
-      return driver;
+      return await withDeadline((async () => {
+        const { createFirebaseDriver } = await import('./drivers/firebase.js');
+        const driver = await createFirebaseDriver({
+          eventId, seedMenu, firebaseConfig: config.firebase, messageWindow: MESSAGE_WINDOW
+        });
+        await driver.ready();
+        return driver;
+      })(), CLOUD_DEADLINE_MS);
     } catch (err) {
       /* Never let a sync failure take down the register mid-service. */
       console.error('[store] cloud sync failed, falling back to this device only', err);
